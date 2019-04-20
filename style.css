@@ -1,0 +1,80 @@
+@import "@material/button/mdc-button";
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    margin: 0px;
+    padding: 0px;
+    background-color: #0377A5;
+}
+
+@font-face{
+  font-family: ProductSans;
+  src: url("fonts/productsans.ttf");
+}
+
+.product {
+  font-family: "ProductSans";
+  font-weight: 100;
+}
+
+@font-face{
+  font-family: ProductSansBold;
+  src: url("fonts/productsans_bold.ttf");
+}
+
+.productbold {
+  font-family: "ProductSansBold";
+}
+
+.logintab {
+    width: 60%;
+    height: 70%;
+    border-radius: 20px;
+    margin: auto;
+    margin-top: 7.5%;
+    background-color: #F8FAFB;
+}
+
+.loginflatimage {
+    float: center;
+    height: auto;
+    width: 80%;
+}
+
+.heading {
+    font-size: 40pt;
+}
+
+.subheading {
+    font-size: 14pt;
+}
+
+.logintable {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    vertical-align: middle;
+}
+.logintable td{
+    width: 50%;
+    text-align: center;
+}
+
+.input-field input[type=text]:focus + label {
+     color: #000;
+}
+
+.input-field input[type=text]:focus {
+    border-bottom: 1px solid #000;
+    box-shadow: 0 1px 0 0 #000;
+}
+
+.loginbtn {
+    width: 70%;
+    height: 40px;
+    margin-top: 20px;
+    background-color: #339CC6;
+    line-height: 40px;
+}
