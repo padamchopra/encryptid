@@ -77,3 +77,11 @@ html, body {
     background-color: #339CC6;
     line-height: 40px;
 }
+
+#toast-container {
+    top: auto !important;
+    width: 50%;
+    left: 25%;
+    text-align: center;
+    bottom: 7%;
+}
