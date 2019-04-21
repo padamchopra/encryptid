@@ -34,13 +34,12 @@ html, body {
     border-radius: 20px;
     margin: auto;
     margin-top: 7.5%;
-    background-color: #F8FAFB;
+    background-color: #FFF;
 }
 
 .loginflatimage {
-    float: center;
     height: auto;
-    width: 80%;
+    width: 100%;
 }
 
 .heading {
