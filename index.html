@@ -7,7 +7,7 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
         <link rel="stylesheet" href="style.css"/>
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase.js"></script>
-        <script type="text/javascript" src="script.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
     <body>
         <div class="logintab">
@@ -32,11 +32,22 @@
                     </td>
                 </tr>
             </table>
+            <div class="playing">
+                <div class="terminalbar">
+                    <div class="smallcircle" style="background-color: #d50000;" id="logoutbutton"></div>
+                    <div class="smallcircle" style="background-color: #FF9800;"></div>
+                    <div class="smallcircle" style="background-color: #8BC34A;"></div>
+                    <span class="content product" id="username">encryptid://user?=</span>
+                </div><br>
+                <div class="content product" id="terminalresulttext"></div>
+            </div>
         </div>
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase-auth.js"></script>
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase-firestore.js"></script>
         <script>
+            $(".logintable").css("opacity","0");
+            $(".logintab").css("opacity","0");
         var config = {
             apiKey: "AIzaSyD5boySKn6E0kkI3hWkVUp8salQrg59HSg",
             authDomain: "encryptid-9a31c.firebaseapp.com",
@@ -46,6 +57,7 @@
             messagingSenderId: "446077629879"
           };
           firebase.initializeApp(config);
+            var db = firebase.firestore();
             document.getElementById("loginbuttonanchor").addEventListener("click",signin);
             
             function signin(){
@@ -58,14 +70,70 @@
                     console.log(errorMessage);
                     M.toast({html: errorMessage, classes: 'rounded', displayLength: '2000'});
                 });
-                firebase.auth().onAuthStateChanged(function(user) {
-                    if (user) {
-                        console.log(user.uid);
+            }
+            
+            firebase.auth().onAuthStateChanged(function(user) {
+                $(".logintab").css("opacity","1");
+                if (user) {
+                    signedIn();
+                } else {
+                    $(".logintab").css("width","60%");
+                    $(".logintable").css("opacity","1");
+                    console.log("No user signed in!");
+                }
+            });
+            
+            var username = "temp";
+            var level = 0;
+            
+            function signedIn(userid){
+                $(".logintable").fadeOut(300);
+                $(".logintab").css("width","40%");
+                $(".logintab").css("height","50%");
+                $(".logintab").css("margin-top","12.5%");
+                $(".logintab").css("background-color","#242528");
+                $(".logintab").css("border-radius","10px");
+                $(".playing").css("opacity","1");
+                db.collection("leaderboard").doc(firebase.auth().getUid()).get().then(function(doc) {
+                    if (doc.exists) {
+                        username = doc.data().name;
+                        level = doc.data().level;
+                        $("#username").text("encryptid://user?=" + username + "&level=" + level);
+                        var toShow = "$ Welcome back, " + username;
+                        $("#terminalresulttext").html(toShow);
+                        toShow += "<br>$ You are on level " + level;
+                        setTimeout(function() {
+                            $("#terminalresulttext").html(toShow);    
+                            toShow += "<br>$ Type 'help' to view all commands";
+                            setTimeout(function() {
+                                $("#terminalresulttext").html(toShow);
+                                toShow += "<br><span class='blink'>> </span>";
+                                setTimeout(function() {
+                                    $("#terminalresulttext").html(toShow);
+                                    setInterval(function(){
+                                        $(".blink").fadeOut(200);
+                                        $(".blink").fadeIn(200);
+                                    }, 1000);
+                                }, 1200);
+                            }, 1200);
+                        }, 1200);
                     } else {
-                        console.log("No user signed in!");
+                        console.log("No such document!");
+                        firebase.auth().signOut();
                     }
+                }).catch(function(error) {
+                    console.log("Error");
+                    firebase.auth().signOut();
                 });
             }
+            
+            $("#logoutbutton").click(function(){
+                firebase.auth().signOut();
+                location.reload();
+            });
+            /*window.onbeforeunload = function(){
+                firebase.auth().signOut();
+            }*/
         </script>
     </body>
 </html>
