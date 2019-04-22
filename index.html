@@ -141,6 +141,7 @@
             
             function listenForCommands(){
                 $(".commandwriting").focus();
+                $("#terminalresulttext").animate({ scrollTop: $('#terminalresulttext').prop("scrollHeight")}, 2000);
                 $(".commandwriting").keypress(function(event){
                     if(event.which == 13){
                         var typed = $(".commandwriting").val();
@@ -171,7 +172,7 @@
                     responseToGive = "cleared";
                 } else if(commandGiven == "rules"){
                     console.log("get rules");
-                    responseToGive = "to submit answer- 'ans:[your-answer]'<br>&nbsp;&nbsp;&nbsp;example- 'ans:hello world'<br>&nbsp;&nbsp;&nbsp;answers are not case sensitive<br>&nbsp;&nbsp;&nbsp;follow <a href='https://www.facebook.com/syndicateofamity46/' target='blank'><u>the syndicate</u></a> for more updates"
+                    responseToGive = "to submit an answer- 'ans:[your-answer]'<br>&nbsp;&nbsp;&nbsp;answers are not case sensitive and without spaces<br>&nbsp;&nbsp;&nbsp;example- 'ans: helloworld'<br>&nbsp;&nbsp;&nbsp;follow <a href='https://www.facebook.com/syndicateofamity46/' target='blank'><u>the syndicate</u></a> for more updates"
                 } else if(commandGiven == "logout"){
                     console.log("logout");
                     responseToGive = "logging out..."

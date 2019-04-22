@@ -125,6 +125,10 @@ html, body {
 #terminalresulttext {
     color: #00E676;
     padding-left: 30px;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: 80px;
 }
 
 .commandwriting{
