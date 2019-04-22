@@ -42,6 +42,17 @@
                 <div class="content product" id="terminalresulttext"></div>
             </div>
         </div>
+        <div id="modal1" class="modal">
+            <div class="modal-content">
+                <h4 class="productbold heading" style="font-size:30px;">Leaderboard</h4>
+                <table width='100%' cellspacing='0' cellpadding='5' class='leaderboardtable product'>
+                    
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="modal-close waves-effect waves-green btn-flat product">CLOSE</a>
+            </div>
+        </div>
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase-auth.js"></script>
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase-firestore.js"></script>
@@ -99,24 +110,25 @@
                         username = doc.data().name;
                         level = doc.data().level;
                         $("#username").text("encryptid://user?=" + username + "&level=" + level);
-                        var toShow = "$ Welcome back, " + username;
+                        var toShow = "<span class='results'>$ Welcome back, " + username;
                         $("#terminalresulttext").html(toShow);
                         toShow += "<br>$ You are on level " + level;
                         setTimeout(function() {
                             $("#terminalresulttext").html(toShow);    
-                            toShow += "<br>$ Type 'help' to view all commands";
+                            toShow += "<br>$ Type 'help' to view all commands<br></span>";
                             setTimeout(function() {
                                 $("#terminalresulttext").html(toShow);
-                                toShow += "<br><span class='blink'>> </span>";
+                                toShow += "<span class='blink'>> </span><input type='text' class='commandwriting browser-default'></input>";
                                 setTimeout(function() {
                                     $("#terminalresulttext").html(toShow);
                                     setInterval(function(){
                                         $(".blink").fadeOut(200);
                                         $(".blink").fadeIn(200);
                                     }, 1000);
-                                }, 1200);
-                            }, 1200);
-                        }, 1200);
+                                    listenForCommands();
+                                }, 400);
+                            }, 400);
+                        }, 400);
                     } else {
                         console.log("No such document!");
                         firebase.auth().signOut();
@@ -127,13 +139,124 @@
                 });
             }
             
+            function listenForCommands(){
+                $(".commandwriting").focus();
+                $(".commandwriting").keypress(function(event){
+                    if(event.which == 13){
+                        var typed = $(".commandwriting").val();
+                        getTermResponse(typed);
+                    } 
+                });
+            };
+            
+            var result = "";
+            function appendToTerminal(toPut){
+                if(toPut.trim().toLowerCase() == "cleared"){
+                    result = "";
+                }
+                result += "$ " + toPut + "<br>";
+                $(".commandwriting").val("");
+                $(".results").html(result);
+            }
+            
+            function getTermResponse(commandGiven){
+                commandGiven = commandGiven.toLowerCase().trim();
+                var responseToGive = "command not found!";
+                
+                if(commandGiven == "help"){
+                    console.log("get commands");
+                    responseToGive = "play- get question<br>&nbsp;&nbsp;&nbsp;ans:[your-answer]- submit answer for current level<br>&nbsp;&nbsp;&nbsp;hint- get level hint if available<br>&nbsp;&nbsp;&nbsp;leaderboard- view leaderboard<br>&nbsp;&nbsp;&nbsp;other commands- help, clear, rules, logout<br>&nbsp;&nbsp;&nbsp;Found a bug? Ping <a href='mailto: jb.padamchopra@gmail.com' target='blank'><u>jb.padamchopra@gmail.com</u></a>";
+                } else if(commandGiven == "clear"){
+                    console.log("clear terminal");
+                    responseToGive = "cleared";
+                } else if(commandGiven == "rules"){
+                    console.log("get rules");
+                    responseToGive = "to submit answer- 'ans:[your-answer]'<br>&nbsp;&nbsp;&nbsp;example- 'ans:hello world'<br>&nbsp;&nbsp;&nbsp;answers are not case sensitive<br>&nbsp;&nbsp;&nbsp;follow <a href='https://www.facebook.com/syndicateofamity46/' target='blank'><u>the syndicate</u></a> for more updates"
+                } else if(commandGiven == "logout"){
+                    console.log("logout");
+                    responseToGive = "logging out..."
+                    firebase.auth().signOut();
+                    location.reload();
+                } else if(commandGiven == "play" || commandGiven == "hint"){
+                    responseToGive = "fetching...";
+                    var question = "";
+                    var hint = "";
+                    db.collection("leaderboard").doc(firebase.auth().getUid()).get().then(function(docuser) {
+                        if (docuser.exists) {
+                            var current_level = docuser.data().level;
+                            db.collection("levels").doc(current_level).get().then(function(doc){
+                               if(doc.exists){
+                                   question = "level " + current_level + "<br>" + doc.data().question;
+                                   hint = "hint: " + doc.data().hint;
+                                   if(commandGiven == "play"){
+                                       appendToTerminal(question);
+                                   }else{
+                                       appendToTerminal(hint);
+                                   }
+                               } else{
+                                   appendToTerminal("level not yet created");
+                               }
+                            });
+                        }else{
+                            appendToTerminal("user not found. logout & try again");    
+                        }
+                    });
+                } else if(commandGiven.split(":")[0] == "ans"){
+                    responseToGive = "validating...";
+                    var given_answer = commandGiven.split(":")[1].trim();
+                    db.collection("leaderboard").doc(firebase.auth().getUid()).get().then(function(docuser) {
+                        if (docuser.exists) {
+                            var current_level = docuser.data().level;
+                            db.collection("answers").doc(current_level).get().then(function(doc){
+                                if(doc.exists){
+                                    if(given_answer == doc.data().ans){
+                                        appendToTerminal("correct answer :)");
+                                        var new_level = parseInt(current_level) + 1;
+                                        db.collection("leaderboard").doc(firebase.auth().getUid()).update({
+                                            level: new_level.toString(),
+                                            updated: firebase.firestore.Timestamp.now()
+                                        }).then(function(){
+                                            appendToTerminal("now on level " + new_level);
+                                            $("#username").text("encryptid://user?=" + docuser.data().name + "&level=" + new_level);
+                                        });
+                                    }else{
+                                        appendToTerminal("incorrect");
+                                    }
+                                }else{
+                                    appendToTerminal("level not yet created");
+                                }
+                            })
+                        } else{
+                            appendToTerminal("level not yet created");
+                        }
+                    });
+                } else if(commandGiven == "leaderboard"){
+                    responseToGive = "opening...";
+                    var Modalelem = document.querySelector('.modal');
+                    var instanceModal = M.Modal.init(Modalelem);
+                    instanceModal.open();
+                    var htmlToAddToTable = "<tr><td class='leaderserial productbold'><b>S. No.</b></td><td class='leadername productbold'><b>Name</b></td><td class='leaderlevel productbold'><b>Level</b></td></tr>";
+                    $(".leaderboardtable").html(htmlToAddToTable);
+                    db.collection("leaderboard").orderBy("level","desc").orderBy("updated").get().then(function(data){
+                        for(var i = 0; i< data.size;i++){
+                            var serialNo = i+1;
+                            var name = data.docs[i].data().name;
+                            var level = data.docs[i].data().level;
+                            htmlToAddToTable += "<tr><td class='leaderserial'>" + serialNo.toString() + "</td><td class='leadername'>" + name + "</td><td class='leaderlevel'>" + level + "</td></tr>";
+                            $(".leaderboardtable").html(htmlToAddToTable);
+                        }
+                    })
+                } else{
+                    console.log("invalid command");
+                    responseToGive = "command not found!";
+                }
+                appendToTerminal(responseToGive);
+            };
+            
             $("#logoutbutton").click(function(){
                 firebase.auth().signOut();
                 location.reload();
             });
-            /*window.onbeforeunload = function(){
-                firebase.auth().signOut();
-            }*/
         </script>
     </body>
 </html>
