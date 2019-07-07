@@ -9,7 +9,7 @@
         <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
-    <body>
+    <body onload="trial()">
         <div class="logintab">
             <table class="logintable" cellspacing="0" cellpadding="0" border="0">
                 <tr>
@@ -59,6 +59,7 @@
         <script>
             $(".logintable").css("opacity","0");
             $(".logintab").css("opacity","0");
+            var userid = "";
         var config = {
             apiKey: "AIzaSyD5boySKn6E0kkI3hWkVUp8salQrg59HSg",
             authDomain: "encryptid-9a31c.firebaseapp.com",
@@ -68,6 +69,9 @@
             messagingSenderId: "446077629879"
           };
           firebase.initializeApp(config);
+            function trial(){
+                console.log(firebase.auth().getUid());
+            }
             var db = firebase.firestore();
             document.getElementById("loginbuttonanchor").addEventListener("click",signin);
             
@@ -97,7 +101,20 @@
             var username = "temp";
             var level = 0;
             
-            function signedIn(userid){
+            function signedIn(){
+                console.log("updated");
+                userid = firebase.auth().getUid();
+                //NEW
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function(){
+                    if(this.readyState == 4 && this.status == 200){
+                        console.log(this.response);
+                    }
+                };
+                xhttp.open("GET","https://encryptid-9a31c.firebaseapp.com/questions",false);
+                xhttp.send("uid=" + userid)
+                
+                //NEW STOPS
                 $(".logintable").fadeOut(300);
                 $(".logintab").css("width","40%");
                 $(".logintab").css("height","50%");
