@@ -1,0 +1,290 @@
+<html>
+
+<head>
+    <title>Encryptid</title>
+    <link rel="icon" href="./images/logo.png" />
+    <link rel="stylesheet" href="materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://www.gstatic.com/firebasejs/5.10.0/firebase.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body onload="checkSignIn()">
+    <div class="logintab">
+        <table class="logintable" cellspacing="0" cellpadding="0" border="0">
+            <tr>
+                <td>
+                    <img src="images/loginmin.png" class="loginflatimage" />
+                </td>
+                <td>
+                    <span class="heading productbold">Encryptid</span><br><br>
+                    <div style="width: 70%;margin-left: auto;margin-right: auto;">
+                        <div class="input-field">
+                            <input id="email" type="text" class="validate">
+                            <label for="email">Username</label>
+                        </div>
+                        <div class="input-field">
+                            <input id="password" type="password" class="validate">
+                            <label for="password">Password</label>
+                        </div>
+                    </div>
+                    <a class="waves-effect waves-light btn loginbtn" id="loginbuttonanchor">LOG-IN</a>
+                </td>
+            </tr>
+        </table>
+        <div class="playing">
+            <div class="terminalbar">
+                <div class="smallcircle" style="background-color: #d50000;" id="logoutbutton"></div>
+                <div class="smallcircle" style="background-color: #FF9800;"></div>
+                <div class="smallcircle" style="background-color: #8BC34A;"></div>
+                <span class="content product" id="username">encryptid://user?=</span>
+            </div><br>
+            <div class="content product" id="terminalresulttext"></div>
+        </div>
+    </div>
+    <div id="modal1" class="modal">
+        <div class="modal-content">
+            <h4 class="productbold heading" style="font-size:30px;">Leaderboard</h4>
+            <table width='100%' cellspacing='0' cellpadding='5' class='leaderboardtable product'>
+
+            </table>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="modal-close waves-effect waves-green btn-flat product">CLOSE</a>
+        </div>
+    </div>
+    <script>
+        $(".logintable").css("opacity", "0");
+        $(".logintab").css("opacity", "0");
+
+        var baseUrl = "https://encryptid.herokuapp.com";
+
+        function checkSignIn() {
+            if (localStorage.getItem("token") == null) {
+                $(".logintab").css("opacity", "1");
+                $(".logintab").css("width", "60%");
+                $(".logintable").css("opacity", "1");
+            } else {
+                $(".logintab").css("opacity", "1");
+                signedIn();
+            }
+        }
+
+        //call sign in function on button click
+        document.getElementById("loginbuttonanchor").addEventListener("click", signin);
+
+        function signin() {
+            var email = document.getElementById("email").value;
+            var password = document.getElementById("password").value;
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    $(".logintab").css("opacity", "1");
+                    localStorage.setItem("token", JSON.parse(this.response).token);
+                    console.log(JSON.parse(this.response).token);
+                    signedIn();
+                } else if (this.readyState == 4 && this.status != 200) {
+                    $(".logintab").css("opacity", "1");
+                    $(".logintab").css("width", "60%");
+                    $(".logintable").css("opacity", "1");
+                    alert(this.response.message);
+                }
+            }
+            xhttp.open("POST", baseUrl + "/user/login", true);
+            xhttp.setRequestHeader('Content-type', 'application/json');
+            xhttp.send(JSON.stringify({
+                "username": email,
+                "password": password
+            }));
+        }
+
+        function signOut() {
+            localStorage.removeItem("token");
+            $(".logintab").css("opacity", "1");
+            $(".logintab").css("width", "60%");
+            $(".logintable").css("opacity", "1");
+            location.reload();
+        }
+
+        $("#logoutbutton").click(() => {
+            signOut();
+        });
+
+        var usernameGlobal = "username";
+
+        function signedIn() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    console.log(this.response);
+                    var username = JSON.parse(this.response).username;
+                    var level = JSON.parse(this.response).level;
+                    $("#username").text("encryptid://user?=" + username + "&level=" + level);
+                    usernameGlobal = username;
+                    var toShow = "<span class='results'>$ Welcome back, " + username;
+                    $("#terminalresulttext").html(toShow);
+                    toShow += "<br>$ You are on level " + level;
+                    setTimeout(function () {
+                        $("#terminalresulttext").html(toShow);
+                        toShow += "<br>$ Type 'help' to view all commands<br></span>";
+                        setTimeout(function () {
+                            $("#terminalresulttext").html(toShow);
+                            toShow += "<span class='blink'>> </span><input type='text' class='commandwriting browser-default'></input>";
+                            setTimeout(function () {
+                                $("#terminalresulttext").html(toShow);
+                                setInterval(function () {
+                                    $(".blink").fadeOut(200);
+                                    $(".blink").fadeIn(200);
+                                }, 1000);
+                                listenForCommands();
+                            }, 400);
+                        }, 400);
+                    }, 400);
+                } else if (this.readyState == 4 && this.status != 200) {
+                    alert("Error Occured. Signing Out. Try Again.");
+                    signOut();
+                }
+            };
+            xhttp.open("POST", baseUrl + "/user/details", true);
+            xhttp.setRequestHeader('Content-type', 'application/json');
+            xhttp.send(JSON.stringify({
+                authorization: "Bearer " + localStorage.getItem("token")
+            }));
+
+            //NEW STOPS
+            $(".logintable").fadeOut(300);
+            $(".logintab").css("width", "40%");
+            $(".logintab").css("height", "50%");
+            $(".logintab").css("margin-top", "12.5%");
+            $(".logintab").css("background-color", "#242528");
+            $(".logintab").css("border-radius", "10px");
+            $(".playing").css("opacity", "1");
+        }
+
+        function listenForCommands() {
+            $(".commandwriting").focus();
+            $("#terminalresulttext").animate({
+                scrollTop: $('#terminalresulttext').prop("scrollHeight")
+            }, 2000);
+            $(".commandwriting").keypress(function (event) {
+                if (event.which == 13) {
+                    var typed = $(".commandwriting").val();
+                    getTermResponse(typed);
+                }
+            });
+        };
+
+        var result = "";
+
+        function appendToTerminal(toPut) {
+            if (toPut.trim().toLowerCase() == "cleared") {
+                result = "";
+            }
+            result += "$ " + toPut + "<br>";
+            $(".commandwriting").val("");
+            $(".results").html(result);
+        }
+
+        function getTermResponse(commandGiven) {
+            commandGiven = commandGiven.toLowerCase().trim();
+            var responseToGive = "command not found!";
+
+            if (commandGiven == "help") {
+                console.log("get commands");
+                responseToGive = "play- get question<br>&nbsp;&nbsp;&nbsp;ans:[your-answer]- submit answer for current level<br>&nbsp;&nbsp;&nbsp;hint- get level hint if available<br>&nbsp;&nbsp;&nbsp;leaderboard- view leaderboard<br>&nbsp;&nbsp;&nbsp;other commands- help, clear, rules, logout<br>&nbsp;&nbsp;&nbsp;Found a bug? Ping <a href='mailto: jb.padamchopra@gmail.com' target='blank'><u>jb.padamchopra@gmail.com</u></a>";
+            } else if (commandGiven == "clear") {
+                console.log("clear terminal");
+                responseToGive = "cleared";
+            } else if (commandGiven == "rules") {
+                console.log("get rules");
+                responseToGive = "to submit an answer- 'ans:[your-answer]'<br>&nbsp;&nbsp;&nbsp;answers are not case sensitive and without spaces<br>&nbsp;&nbsp;&nbsp;example- 'ans: helloworld'<br>&nbsp;&nbsp;&nbsp;follow <a href='https://www.facebook.com/syndicateofamity46/' target='blank'><u>the syndicate</u></a> for more updates"
+            } else if (commandGiven == "logout") {
+                console.log("logout");
+                responseToGive = "logging out..."
+                signOut();
+            } else if (commandGiven == "play" || commandGiven == "hint") {
+                responseToGive = "fetching...";
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        var question = JSON.parse(this.response).question;
+                        var hint = JSON.parse(this.response).hint;
+                        if (commandGiven == "play") {
+                            appendToTerminal(question);
+                        } else {
+                            appendToTerminal(hint);
+                        }
+                    } else if (this.readyState == 4 && this.status != 200) {
+                        appendToTerminal(JSON.parse(this.response).message);
+                    }
+                };
+                xhttp.open("POST", baseUrl + "/questions", true);
+                xhttp.setRequestHeader('Content-type', 'application/json');
+                xhttp.send(JSON.stringify({
+                    authorization: "Bearer " + localStorage.getItem("token")
+                }));
+            } else if (commandGiven.split(":")[0] == "ans") {
+                responseToGive = "validating...";
+                var given_answer = commandGiven.split(":")[1].trim();
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        var result = JSON.parse(this.response).result;
+                        var level = JSON.parse(this.response).level;
+                        if (result == "correct") {
+                            appendToTerminal("correct answer :)");
+                            appendToTerminal("now on level " + level);
+                            $("#username").text("encryptid://user?=" + usernameGlobal + "&level=" + level);
+                        } else {
+                            appendToTerminal("incorrect");
+                        }
+                    } else if (this.readyState == 4 && this.status != 200) {
+                        appendToTerminal(JSON.parse(this.response).message);
+                    }
+                };
+                xhttp.open("POST", baseUrl + "/answers", true);
+                xhttp.setRequestHeader('Content-type', 'application/json');
+                xhttp.send(JSON.stringify({
+                    authorization: "Bearer " + localStorage.getItem("token"),
+                    givenAnswer: given_answer
+                }));
+            } else if (commandGiven == "leaderboard") {
+                responseToGive = "opening...";
+                var Modalelem = document.querySelector('.modal');
+                var instanceModal = M.Modal.init(Modalelem);
+                instanceModal.open();
+                var htmlToAddToTable = "<tr><td class='leaderserial productbold'><b>S. No.</b></td><td class='leadername productbold'><b>Username</b></td><td class='leaderlevel productbold'><b>Level</b></td></tr>";
+                $(".leaderboardtable").html(htmlToAddToTable);
+
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        var jsonResult = JSON.parse(this.response);
+                        for (var i = 0; i < jsonResult.length; i++) {
+                            var serialNo = i + 1;
+                            var username = jsonResult[i].username;
+                            var level = jsonResult[i].level;
+                            htmlToAddToTable += "<tr><td class='leaderserial'>" + serialNo.toString() + "</td><td class='leadername'>" + username + "</td><td class='leaderlevel'>" + level + "</td></tr>";
+                            $(".leaderboardtable").html(htmlToAddToTable);
+                        }
+                    } else if (this.readyState == 4 && this.status != 200) {
+                        appendToTerminal(JSON.parse(this.response).message);
+                    }
+                }
+                xhttp.open("GET", baseUrl + "/user/leaderboard", true);
+                xhttp.setRequestHeader('Content-type', 'application/json');
+                xhttp.send();
+            } else {
+                console.log("invalid command");
+                responseToGive = "command not found!";
+            }
+            appendToTerminal(responseToGive);
+        };
+
+
+    </script>
+</body>
+
+</html>
