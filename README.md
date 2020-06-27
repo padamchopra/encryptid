@@ -4,3 +4,7 @@ REST API hosted on Heroku. A public route from the last event is still available
 
 To give it a try, use the credentials- <br>
 username: testuser and password:itis6inmorning
+
+## Screenshots
+![Login](https://github.com/padamchopra/encryptid/blob/master/login.png)
+![Terminal](https://github.com/padamchopra/encryptid/blob/master/terminal.png)
